@@ -19,6 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="C:\Users\shouk\Desktop\新建文件夹\CameraCalibrator.h" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="Capture_qr.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -6,7 +6,7 @@
 #include <conio.h>
 #include <iostream>
 #include <string.h>
-#include<Windows.h>
+#include <Windows.h>
 #include "opencv2/aruco.hpp"
 #include <mutex>
 #include <condition_variable>
@@ -164,30 +164,54 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
 
         std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
         std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
-        //========处理  检测二维码============
+        //========处理检测码============
+         // load intrinsics
+        cv::Mat cameraMatrix = Mat(3, 3, CV_32FC1), distCoeffs = Mat(1, 5, CV_32FC1);
+        vector<vector<float>> intrinsics = { {3535.78,0,860.79} ,{0,3551.96,480.73},{0,0,1} };
+        vector<vector<float>> distCoeffsMat = { {-0.0511285 ,1.47971 ,-0.00731253 ,0,0} };
+        for (int i = 0; i < cameraMatrix.rows; i++)
+        {
+            for (int j = 0; j < cameraMatrix.cols; j++)
+            {
+                cameraMatrix.at<float>(i, j) = intrinsics[i][j];
+            }
+        }
+
+        for (int i = 0; i < distCoeffs.rows; i++)
+        {
+            for (int j = 0; j < distCoeffs.cols; j++)
+            {
+                distCoeffs.at<float>(i, j) = distCoeffsMat[i][j];
+            }
+        }
+        
         Ptr<aruco::Dictionary> dict = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(aruco::DICT_4X4_100));
         // board: aruco map. create(x_num, y_num, size(m), gap, diction, (index=1))
-        Ptr<aruco::GridBoard> board = aruco::GridBoard::create(7, 10, 0.0272, 0.00518, dict);   // real distance in meters.
+        Ptr<aruco::GridBoard> board = aruco::GridBoard::create(7, 10, 0.0167, 0.004, dict);   // real distance in meters.
         vector<int> markerIds;         // detected ids.
         vector<vector<Point2f>> markerCorners;
+        Mat  R;
         aruco::detectMarkers(src_img, board->dictionary, markerCorners, markerIds);
 
         if (markerIds.size() > 0) {      // if at least one marker detected
             aruco::drawDetectedMarkers(src_img, markerCorners, markerIds);
 
             cv::Vec3d rvec, tvec;
-            //int valid = cv::aruco::estimatePoseBoard(markerCorners, markerIds, board, cameraMatrix, distCoeffs, rvec, tvec);
-            /*if (valid) {
-                aruco::drawAxis(inputImage, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
+            int valid = cv::aruco::estimatePoseBoard(markerCorners, markerIds, board, cameraMatrix, distCoeffs, rvec, tvec);
+
+            if (valid) {
+              //  aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
                 cout << "rvec: " << rvec << endl;
                 cout << "tvec: " << tvec << endl;
-            }*/
+                //for (int i = 0; i < markerIds.size(); i++)
+                //    cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvec[i], tvec[i], 0.1);
+            }
         }
         else {
             cout << "cannot find anymarks" << endl;
         }
-        std::chrono::time_point<std::chrono::high_resolution_clock> p1 = std::chrono::high_resolution_clock::now();
-        cout << "stitch high_resolution_clock time:" << (float)std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0).count() / 1000 << "ms" << endl;
+        //std::chrono::time_point<std::chrono::high_resolution_clock> p1 = std::chrono::high_resolution_clock::now();
+        //cout << "stitch high_resolution_clock time:" << (float)std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0).count() / 1000 << "ms" << endl;
         //=======================
 
         if (g_bExit) {
