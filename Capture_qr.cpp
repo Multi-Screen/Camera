@@ -127,7 +127,7 @@ static  unsigned int __stdcall  WorkThread(void* pUser)
 {   
     MV_FRAME_OUT_INFO_EX wt_imginfo;
     memset(&wt_imginfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    std::cout <<  std::this_thread::get_id() << "   printf: " << "WorkThread1" << std::endl;
+    //std::cout <<  std::this_thread::get_id() << "   printf: " << "WorkThread1" << std::endl;
     unsigned char* data = (unsigned char*)malloc(sizeof(unsigned char) * (payload_size));
     while (1) {
         std::unique_lock<std::mutex> lck(data_mutex);
@@ -162,8 +162,8 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         std::unique_lock<std::mutex> lck(data_mutex);
         data_var.wait(lck, [] {return flag == 2; });
 
-        std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
-        std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
+        //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
+        //std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
         //========处理检测码============
          // load intrinsics
         cv::Mat cameraMatrix = Mat(3, 3, CV_32FC1), distCoeffs = Mat(1, 5, CV_32FC1);
@@ -190,22 +190,18 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         Ptr<aruco::GridBoard> board = aruco::GridBoard::create(7, 10, 0.0167, 0.004, dict);   // real distance in meters.
         vector<int> markerIds;         // detected ids.
         vector<vector<Point2f>> markerCorners;
-        Mat  R;
         aruco::detectMarkers(src_img, board->dictionary, markerCorners, markerIds);
 
         if (markerIds.size() > 0) {      // if at least one marker detected
             aruco::drawDetectedMarkers(src_img, markerCorners, markerIds);
 
-            cv::Vec3d rvec, tvec;
-            int valid = cv::aruco::estimatePoseBoard(markerCorners, markerIds, board, cameraMatrix, distCoeffs, rvec, tvec);
+            vector<cv::Vec3d> rvecs;
+            vector<cv::Vec3d> tvecs;
+            cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.0167, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-            if (valid) {
-              //  aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
-                cout << "rvec: " << rvec << endl;
-                cout << "tvec: " << tvec << endl;
-                //for (int i = 0; i < markerIds.size(); i++)
-                //    cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvec[i], tvec[i], 0.1);
-            }
+            //  aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
+            for (int i = 0; i < markerIds.size(); i++)
+               cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
         }
         else {
             cout << "cannot find anymarks" << endl;
@@ -226,11 +222,10 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
 
 static  unsigned int __stdcall  WorkThread3(void* pUser)
 {
-
     while (1) {
         std::unique_lock<std::mutex> lck(data_mutex);
         data_var.wait(lck, [] {return flag == 3; });
-        std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread3" << std::endl;
+        //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread3" << std::endl;
 
         cv::imshow("test", src_img);
         cv::waitKey(1);
