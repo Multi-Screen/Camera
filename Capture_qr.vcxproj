@@ -19,10 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\shouk\Desktop\新建文件夹\CameraCalibrator.h" />
+    <ClCompile Include="calibrate.cpp" />
+    <ClCompile Include="CameraCalibrator.cpp" />
+    <ClCompile Include="Capture_qr.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Capture_qr.cpp" />
+    <None Include=".gitignore" />
+    <None Include="FeatureFile.ini" />
+    <None Include="LICENSE" />
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CameraCalibrator.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

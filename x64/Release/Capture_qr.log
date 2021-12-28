@@ -1,20 +1,18 @@
-﻿  Capture_qr.cpp
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(170,93): warning C4305: “初始化”: 从“double”到“_Tp”截断
+﻿  calibrate.cpp
+  CameraCalibrator.cpp
+E:\MultiScreen\Capture_qr\CameraCalibrator.cpp(19,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(171,89): warning C4305: “初始化”: 从“double”到“_Tp”截断
+E:\MultiScreen\Capture_qr\CameraCalibrator.cpp(19,40): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(190,90): warning C4305: “参数”: 从“double”到“float”截断
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(201,111): warning C4305: “参数”: 从“double”到“float”截断
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(205,94): warning C4305: “参数”: 从“double”到“float”截断
   正在生成代码
-  6 of 299 functions ( 2.0%) were compiled, the rest were copied from previous compilation.
-    4 functions were new in current compilation
-    11 functions had inline decision re-evaluated but remain unchanged
+  0 of 293 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   Capture_qr.vcxproj -> E:\MultiScreen\Capture_qr\x64\Release\Capture_qr.exe
