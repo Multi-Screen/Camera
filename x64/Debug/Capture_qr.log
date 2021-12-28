@@ -1,0 +1,4 @@
+﻿  Capture_qr.cpp
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(177,92): warning C4305: “参数”: 从“double”到“float”截断
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(166,10): warning C4101: “isQRcode”: 未引用的局部变量
+  Capture_qr.vcxproj -> E:\MultiScreen\Capture_qr\x64\Debug\Capture_qr.exe
