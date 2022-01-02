@@ -1,29 +1,33 @@
-﻿#include "MvCameraControl.h"
+﻿#include <iostream>
+#include "MvCameraControl.h"
 #include "opencv2/opencv.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include <stdio.h>
 #include <conio.h>
-#include <iostream>
 #include <string.h>
 #include <Windows.h>
 #include "opencv2/aruco.hpp"
 #include <mutex>
 #include <condition_variable>
 
+#include<winsock.h>
+#pragma comment(lib,"ws2_32.lib")
 
 std::mutex data_mutex;
 std::condition_variable data_var;
 int flag = 1;
 
+
 using namespace std;
 using namespace cv;
 cv::Mat src_img;
+
+// 标签大小
+float labelWidth = 0.0167;
 
 unsigned int payload_size = 0;
 bool g_bExit = false;
 
 int ret = MV_OK;
+
 
 
 // ch:等待按键输入 | en:Wait for key press
@@ -85,6 +89,44 @@ int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)
         }
     }
     return MV_OK;
+}
+
+// 3D角坐标
+vector<Point3f> getCornersInCameraWorld(double side, Vec3d rvec, Vec3d tvec) {
+
+    double half_side = side / 2;
+
+
+    // compute rot_mat
+    Mat rot_mat;
+    Rodrigues(rvec, rot_mat);
+
+    // transpose of rot_mat for easy columns extraction
+    Mat rot_mat_t = rot_mat.t();
+
+    // the two E-O and F-O vectors
+    double* tmp = rot_mat_t.ptr<double>(0);
+    Point3f camWorldE(tmp[0] * half_side,
+        tmp[1] * half_side,
+        tmp[2] * half_side);
+
+    tmp = rot_mat_t.ptr<double>(1);
+    Point3f camWorldF(tmp[0] * half_side,
+        tmp[1] * half_side,
+        tmp[2] * half_side);
+
+    // convert tvec to point
+    Point3f tvec_3f(tvec[0], tvec[1], tvec[2]);
+
+    // return vector:
+    vector<Point3f> ret(4, tvec_3f);
+
+    ret[0] += camWorldE + camWorldF;
+    ret[1] += -camWorldE + camWorldF;
+    ret[2] += -camWorldE - camWorldF;
+    ret[3] += camWorldE - camWorldF;
+
+    return ret;
 }
 
 // convert data stream in Mat format
@@ -165,7 +207,7 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
         //std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
         //========处理检测码============
-         // load intrinsics
+         // load intrinsics,需要标定相机才能获取
         cv::Mat cameraMatrix = Mat(3, 3, CV_32FC1), distCoeffs = Mat(1, 5, CV_32FC1);
         vector<vector<float>> intrinsics = { {3535.78,0,860.79} ,{0,3551.96,480.73},{0,0,1} };
         vector<vector<float>> distCoeffsMat = { {-0.0511285 ,1.47971 ,-0.00731253 ,0,0} };
@@ -199,9 +241,15 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
             vector<cv::Vec3d> tvecs;
             cv::aruco::estimatePoseSingleMarkers(markerCorners, 0.0167, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-            //  aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvec, tvec, 0.1);
-            for (int i = 0; i < markerIds.size(); i++)
-               cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+            // 画出轴
+            //for (int i = 0; i < markerIds.size(); i++)
+            //   cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
+
+            // 计算3d坐标
+            vector<Point3f> p= getCornersInCameraWorld(labelWidth,rvecs[0], tvecs[0]);
+            cout << p << endl;
+            /*String Message = to_string(1) + "," + to_string(2);
+            sendMessage(Message);*/
         }
         else {
             cout << "cannot find anymarks" << endl;
