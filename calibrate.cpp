@@ -59,6 +59,7 @@
 //	std::cout << distCoeffs.at<double>(1, 0) << " " << distCoeffs.at<double>(1, 1) << " " << distCoeffs.at<double>(1, 2) << std::endl;
 //	std::cout << distCoeffs.at<double>(2, 0) << " " << distCoeffs.at<double>(2, 1) << " " << distCoeffs.at<double>(2, 2) << std::endl;
 //	
+//	
 //	imshow("Original Image", image);
 //    imshow("Undistorted Image", uImage);
 //
