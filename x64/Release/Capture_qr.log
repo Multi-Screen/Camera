@@ -1,45 +1,36 @@
 ﻿  Capture_qr.cpp
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(24,26): warning C4305: “初始化”: 从“double”到“float”截断
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(157,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(22,26): warning C4305: “初始化”: 从“double”到“float”截断
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(144,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(143,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(155,30): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(142,34): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(162,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(149,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(161,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(148,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(160,30): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(147,34): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(165,45): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
-          with
-          [
-              _Tp=double
-          ]
-          and
-          [
-              _Tp=float
-          ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(165,36): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(152,49): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=double
@@ -48,7 +39,7 @@ E:\MultiScreen\Capture_qr\Capture_qr.cpp(165,36): warning C4244: “参数”: �
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(165,27): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(152,40): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=double
@@ -57,18 +48,7 @@ E:\MultiScreen\Capture_qr\Capture_qr.cpp(165,27): warning C4244: “参数”: �
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(267,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
-          with
-          [
-              _Tp=float
-          ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(270,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
-          with
-          [
-              _Tp=float
-          ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(289,94): warning C4305: “参数”: 从“double”到“float”截断
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(316,56): warning C4244: “=”: 从“_Tp”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(152,31): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=double
@@ -77,9 +57,20 @@ E:\MultiScreen\Capture_qr\Capture_qr.cpp(316,56): warning C4244: “=”: 从“
           [
               _Tp=float
           ]
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(254,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+          with
+          [
+              _Tp=float
+          ]
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(257,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+          with
+          [
+              _Tp=float
+          ]
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(276,106): warning C4305: “参数”: 从“double”到“float”截断
   正在生成代码
-  12 of 310 functions ( 3.9%) were compiled, the rest were copied from previous compilation.
-    1 functions were new in current compilation
+  2 of 320 functions ( 0.6%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   Capture_qr.vcxproj -> E:\MultiScreen\Capture_qr\x64\Release\Capture_qr.exe

@@ -47,17 +47,17 @@
 //
 //	// display camera matrix
 //	cv::Mat cameraMatrix= cameraCalibrator.getCameraMatrix();
-//	std::cout << " Camera intrinsic: " << cameraMatrix.rows << "x" << cameraMatrix.cols << std::endl;
-//	std::cout << cameraMatrix.at<double>(0,0) << " " << cameraMatrix.at<double>(0,1) << " " << cameraMatrix.at<double>(0,2) << std::endl;
-//	std::cout << cameraMatrix.at<double>(1,0) << " " << cameraMatrix.at<double>(1,1) << " " << cameraMatrix.at<double>(1,2) << std::endl;
-//	std::cout << cameraMatrix.at<double>(2,0) << " " << cameraMatrix.at<double>(2,1) << " " << cameraMatrix.at<double>(2,2) << std::endl;
+//	std::cout << " Camera intrinsic: " << cameraMatrix.rows << "x" << cameraMatrix.cols <<std::endl;
+//	std::cout << cameraMatrix.at<double>(0,0) << " " << cameraMatrix.at<double>(0,1) << " " << cameraMatrix.at<double>(0,2) << std::std::endl;
+//	std::cout << cameraMatrix.at<double>(1,0) << " " << cameraMatrix.at<double>(1,1) << " " << cameraMatrix.at<double>(1,2) << std::std::endl;
+//	std::cout << cameraMatrix.at<double>(2,0) << " " << cameraMatrix.at<double>(2,1) << " " << cameraMatrix.at<double>(2,2) << std::std::endl;
 //
 //    
 //	cv::Mat distCoeffs =  cameraCalibrator.getDistCoeffs();
 //	std::cout << " distCoeffs: " << distCoeffs.rows << "x" << distCoeffs.cols << std::endl;
-//	std::cout << distCoeffs.at<double>(0, 0) << " " << distCoeffs.at<double>(0, 1) << " " << distCoeffs.at<double>(0, 2) << std::endl;
-//	std::cout << distCoeffs.at<double>(1, 0) << " " << distCoeffs.at<double>(1, 1) << " " << distCoeffs.at<double>(1, 2) << std::endl;
-//	std::cout << distCoeffs.at<double>(2, 0) << " " << distCoeffs.at<double>(2, 1) << " " << distCoeffs.at<double>(2, 2) << std::endl;
+//	std::cout << distCoeffs.at<double>(0, 0) << " " << distCoeffs.at<double>(0, 1) << " " << distCoeffs.at<double>(0, 2) << std::std::endl;
+//	std::cout << distCoeffs.at<double>(1, 0) << " " << distCoeffs.at<double>(1, 1) << " " << distCoeffs.at<double>(1, 2) << std::std::endl;
+//	std::cout << distCoeffs.at<double>(2, 0) << " " << distCoeffs.at<double>(2, 1) << " " << distCoeffs.at<double>(2, 2) << std::std::endl;
 //	
 //	
 //	imshow("Original Image", image);

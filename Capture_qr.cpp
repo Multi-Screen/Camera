@@ -2,12 +2,12 @@
 #include "MvCameraControl.h"
 #include "opencv2/opencv.hpp"
 #include <conio.h>
-#include <string.h>
-#include <Windows.h>
 #include "opencv2/aruco.hpp"
+
 #include <mutex>
 #include <condition_variable>
 
+// socket
 #include<winsock.h>
 #pragma comment(lib,"ws2_32.lib")
 
@@ -16,8 +16,6 @@ std::condition_variable data_var;
 int flag = 1;
 
 
-using namespace std;
-using namespace cv;
 cv::Mat src_img;
 
 // 标签大小
@@ -28,18 +26,20 @@ bool g_bExit = false;
 
 int ret = MV_OK;
 
-// ======================socket========================
+// socket 
 int send_len = 0;
 int recv_len = 0;
+int len = 0;
 //定义发送缓冲区和接受缓冲区
-char send_buf[100];
-char recv_buf[100];
+char send_buf[10000];
+char recv_buf[10000];
 //定义服务端套接字，接受请求套接字
 SOCKET s_server;
+SOCKET s_accept;
 //服务端地址客户端地址
 SOCKADDR_IN server_addr;
+SOCKADDR_IN accept_addr;
 
-/*socket初始化，服务器连接*/
 void initialization() {
     //初始化套接字库
     WORD w_req = MAKEWORD(2, 2);//版本号
@@ -47,33 +47,20 @@ void initialization() {
     int err;
     err = WSAStartup(w_req, &wsadata);
     if (err != 0) {
-        cout << "初始化套接字库失败！" << endl;
+        std::cout << "初始化套接字库失败！" << std::endl;
     }
     else {
-        cout << "初始化套接字库成功！" << endl;
+        std::cout << "初始化套接字库成功！" << std::endl;
     }
     //检测版本号
     if (LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wHighVersion) != 2) {
-        cout << "套接字库版本号不符！" << endl;
+        std::cout << "套接字库版本号不符！" << std::endl;
         WSACleanup();
     }
     else {
-        cout << "套接字库版本正确！" << endl;
+        std::cout << "套接字库版本正确！" << std::endl;
     }
     //填充服务端地址信息
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.123");
-    server_addr.sin_port = htons(2020);
-    //创建套接字
-    s_server = socket(AF_INET, SOCK_STREAM, 0);
-    cout << "正在连接服务器..." << endl;
-    if (connect(s_server, (SOCKADDR*)&server_addr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
-        cout << "服务器连接失败！" << endl;
-        WSACleanup();
-    }
-    else {
-        cout << "服务器连接成功！" << endl;
-    }
 }
 
 // ch:等待按键输入 | en:Wait for key press
@@ -136,36 +123,36 @@ int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)
     }
     return MV_OK;
 }
- 
+
 // 3D角坐标 https://stackoverflow.com/questions/46363618/aruco-markers-with-opencv-get-the-3d-corner-coordinates
-vector<Point3f> getCornersInCameraWorld(double side, Vec3d rvec, Vec3d tvec) {
+std::vector<cv::Point3f> getCornersInCameraWorld(double side, cv::Vec3d rvec, cv::Vec3d tvec) {
 
     double half_side = side / 2;
 
 
     // compute rot_mat
-    Mat rot_mat;
+    cv::Mat rot_mat;
     Rodrigues(rvec, rot_mat);
 
     // transpose of rot_mat for easy columns extraction
-    Mat rot_mat_t = rot_mat.t();
+    cv::Mat rot_mat_t = rot_mat.t();
 
     // the two E-O and F-O vectors
     double* tmp = rot_mat_t.ptr<double>(0);
-    Point3f camWorldE(tmp[0] * half_side,
+    cv::Point3f camWorldE(tmp[0] * half_side,
         tmp[1] * half_side,
         tmp[2] * half_side);
 
     tmp = rot_mat_t.ptr<double>(1);
-    Point3f camWorldF(tmp[0] * half_side,
+    cv::Point3f camWorldF(tmp[0] * half_side,
         tmp[1] * half_side,
         tmp[2] * half_side);
 
     // convert tvec to point
-    Point3f tvec_3f(tvec[0], tvec[1], tvec[2]);
+    cv::Point3f tvec_3f(tvec[0], tvec[1], tvec[2]);
 
     // return vector:
-    vector<Point3f> ret(4, tvec_3f);
+    std::vector<cv::Point3f> ret(4, tvec_3f);
 
     ret[0] += camWorldE + camWorldF;
     ret[1] += -camWorldE + camWorldF;
@@ -212,15 +199,15 @@ bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::M
 }
 
 static  unsigned int __stdcall  WorkThread(void* pUser)
-{   
+{
     MV_FRAME_OUT_INFO_EX wt_imginfo;
     memset(&wt_imginfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-    //std::cout <<  std::this_thread::get_id() << "   printf: " << "WorkThread1" << std::endl;
+    //std::std::cout <<  std::this_thread::get_id() << "   printf: " << "WorkThread1" << std::std::endl;
     unsigned char* data = (unsigned char*)malloc(sizeof(unsigned char) * (payload_size));
     while (1) {
         std::unique_lock<std::mutex> lck(data_mutex);
         data_var.wait(lck, [] {return flag == 1; });
-       
+
         if (data == NULL) {
             return -1;
         }
@@ -246,7 +233,7 @@ static  unsigned int __stdcall  WorkThread(void* pUser)
 
 // 计算坐标--相对于摄像机，摄像机是世界坐标的0 0 0
 float init_data[4] = { 0,0,0,1 };
-Mat camera_pos = Mat(4, 1, CV_32F, &init_data);
+cv::Mat camera_pos = cv::Mat(4, 1, CV_32F, &init_data);
 
 static  unsigned int __stdcall  WorkThread2(void* pUser)
 {
@@ -254,19 +241,19 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         std::unique_lock<std::mutex> lck(data_mutex);
         data_var.wait(lck, [] {return flag == 2; });
 
-        //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
+        //std::std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::std::endl;
         //std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
         //========处理检测码============
          // load intrinsics,需要标定相机才能获取
-        cv::Mat cameraMatrix = Mat(3, 3, CV_32F), distCoeffs = Mat(1, 5, CV_32F);
-        Mat Rt = Mat(3, 4, CV_32F);
-        vector<vector<float>> intrinsics = { 
+        cv::Mat cameraMatrix = cv::Mat(3, 3, CV_32F), distCoeffs = cv::Mat(1, 5, CV_32F);
+        cv::Mat Rt = cv::Mat(3, 4, CV_32F);
+        std::vector<std::vector<float>> intrinsics = {
             {3535.78,0,860.79} ,
             {0,3551.96,480.73},
-            {0,0,1} 
+            {0,0,1}
         };
-        vector<vector<float>> distCoeffsMat = { 
-            {-0.0511285 ,1.47971 ,-0.00731253 ,0,0} 
+        std::vector<std::vector<float>> distCoeffsMat = {
+            {-0.0511285 ,1.47971 ,-0.00731253 ,0,0}
         };
         for (int i = 0; i < cameraMatrix.rows; i++)
         {
@@ -283,27 +270,29 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
                 distCoeffs.at<float>(i, j) = distCoeffsMat[i][j];
             }
         }
-        
-        Ptr<aruco::Dictionary> dict = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(aruco::DICT_4X4_100));
+
+        cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_4X4_100));
         // board: aruco map. create(x_num, y_num, size(m), gap, diction, (index=1))
-        Ptr<aruco::GridBoard> board = aruco::GridBoard::create(7, 10, labelWidth, 0.004, dict);   // real distance in meters.
-        vector<int> markerIds;         // detected ids.
-        vector<vector<Point2f>> markerCorners;
-        aruco::detectMarkers(src_img, board->dictionary, markerCorners, markerIds);
-        
+        cv::Ptr<cv::aruco::GridBoard> board = cv::aruco::GridBoard::create(7, 10, labelWidth, 0.004, dict);   // real distance in meters.
+        std::vector<int> markerIds;         // detected ids.
+        std::vector<std::vector<cv::Point2f>> markerCorners;
+        cv::aruco::detectMarkers(src_img, board->dictionary, markerCorners, markerIds);
+
         if (markerIds.size() > 0) {      // if at least one marker detected
-            aruco::drawDetectedMarkers(src_img, markerCorners, markerIds);
+            cv::aruco::drawDetectedMarkers(src_img, markerCorners, markerIds);
 
-            vector<cv::Vec3d> rvecs;
-            vector<cv::Vec3d> tvecs;
+            std::vector<cv::Vec3d> rvecs;
+            std::vector<cv::Vec3d> tvecs;
             cv::aruco::estimatePoseSingleMarkers(markerCorners, labelWidth, cameraMatrix, distCoeffs, rvecs, tvecs);
-
+            std::cout << rvecs[0][0] << std::endl;
+            std::cout << rvecs[0][1] << std::endl;
+            std::cout << rvecs[0][2] << std::endl;
             // 画出轴
             //for (int i = 0; i < markerIds.size(); i++)
             //   cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
-
+            /*
             // 旋转矩阵
-            Mat rot_mat  = Mat(3,3, CV_32F);
+            Mat rot_mat = Mat(3, 3, CV_32F);
             Rodrigues(rvecs[0], rot_mat);
             for (int i = 0; i < 3; i++)
             {
@@ -319,23 +308,23 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
             }
             Mat res = Mat(3, 1, CV_32F);
             try
-            {   
-                res = Rt*camera_pos ;
-                
+            {
+                res = Rt * camera_pos;
+
             }
             catch (const std::exception& e)
             {
-                cout << e.what() << endl;
+                std::cout << e.what() << std::endl;
             }
-            cout << res << endl;
+            std::cout << res << std::endl;*/
             /*String Message = to_string(1) + "," + to_string(2);
             sendMessage(Message);*/
         }
         else {
-            cout << "cannot find anymarks" << endl;
+            std::cout << "cannot find anymarks" << std::endl;
         }
         //std::chrono::time_point<std::chrono::high_resolution_clock> p1 = std::chrono::high_resolution_clock::now();
-        //cout << "stitch high_resolution_clock time:" << (float)std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0).count() / 1000 << "ms" << endl;
+        //std::cout << "stitch high_resolution_clock time:" << (float)std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0).count() / 1000 << "ms" << std::endl;
         //=======================
 
         if (g_bExit) {
@@ -353,7 +342,7 @@ static  unsigned int __stdcall  WorkThread3(void* pUser)
     while (1) {
         std::unique_lock<std::mutex> lck(data_mutex);
         data_var.wait(lck, [] {return flag == 3; });
-        //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread3" << std::endl;
+        //std::std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread3" << std::std::endl;
 
         cv::imshow("test", src_img);
         cv::waitKey(1);
@@ -367,16 +356,71 @@ static  unsigned int __stdcall  WorkThread3(void* pUser)
 }
 
 
-int main(int argv, char** argc) {
+static  unsigned int __stdcall  WorkThread4(void* pUser)
+{   
+    //填充服务端信息
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(2022);
+    //创建套接字
+    s_server = socket(AF_INET, SOCK_STREAM, 0);
+    int flag = bind(s_server, (SOCKADDR*)&server_addr, sizeof(SOCKADDR));
+    if (flag == SOCKET_ERROR) {
+        std::cout << "套接字绑定失败！" << std::endl;
+        WSACleanup();
+    }
+    else {
+        std::cout << "套接字绑定成功！" << std::endl;
+    }
+    //设置套接字为监听状态
+    if (listen(s_server, SOMAXCONN) < 0) {
+        std::cout << "设置监听状态失败！" << std::endl;
+        WSACleanup();
+    }
+    else {
+        std::cout << "设置监听状态成功！" << std::endl;
+    }
+    std::cout << "服务端正在监听连接，请稍候...." << std::endl;
+    //接受连接请求
+    len = sizeof(SOCKADDR);
+    s_accept = accept(s_server, (SOCKADDR*)&accept_addr, &len);
+    if (s_accept == SOCKET_ERROR) {
+        std::cout << "连接失败！" << std::endl;
+        WSACleanup();
+        return 0;
+    }
+    std::cout << "连接建立，准备接受数据" << std::endl;
+    while (1) {
+        recv_len = recv(s_accept, recv_buf, 100, 0);
+        if (recv_len < 0) {
+            std::cout << "接受失败！" << std::endl;
+            break;
+        }
+        else {
+            std::cout << "客户端信息:" << recv_buf << std::endl;
+        }
+        std::cout << "请输入回复信息:";
+        std::cin >> send_buf;
+        send_len = send(s_accept, send_buf, 100, 0);
+        if (send_len < 0) {
+            std::cout << "发送失败！" << std::endl;
+            break;
+        }
+    }
+    return 0;
+}
 
-    //std::cout << "main: " << std::this_thread::get_id() << "   printf: " << "main" << std::endl;
+
+int main() {
+   
+    initialization();
+    //std::std::cout << "main: " << std::this_thread::get_id() << "   printf: " << "main" << std::std::endl;
     void* handle = NULL;
-
     MV_CC_DEVICE_INFO_LIST wt_devices;
     memset(&wt_devices, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     ret = MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &wt_devices);
     if (ret != MV_OK) {
-        cout << "enum devices faild!" << endl;
+        std::cout << "enum devices faild!" << std::endl;
         return -1;
     }
     if (wt_devices.nDeviceNum > 0) {
@@ -386,7 +430,7 @@ int main(int argv, char** argc) {
         }
     }
     else {
-        cout << "no device found" << endl;
+        std::cout << "no device found" << std::endl;
         return -1;
     }
 
@@ -415,7 +459,7 @@ int main(int argv, char** argc) {
     // load config
     ret = MV_CC_FeatureLoad(handle, "FeatureFile.ini");
     if (ret != MV_OK) {
-        cout << "loading config file faild" << endl;
+        std::cout << "loading config file faild" << std::endl;
         return -1;
     }
 
@@ -429,7 +473,7 @@ int main(int argv, char** argc) {
     // start grabbing images
     ret = MV_CC_StartGrabbing(handle);
     if (ret != MV_OK) {
-        cout << "grab image failed!" << endl;
+        std::cout << "grab image failed!" << std::endl;
         return -1;
     }
 
@@ -449,6 +493,12 @@ int main(int argv, char** argc) {
 
     void* hThreadHandle3 = (void*)_beginthreadex(NULL, 0, WorkThread3, handle, 0, &nThreadID);
     if (NULL == hThreadHandle3)
+    {
+        return -1;
+    }
+
+    void* hThreadHandle_socket = (void*)_beginthreadex(NULL, 0, WorkThread4, handle, 0, &nThreadID);
+    if (NULL == hThreadHandle_socket)
     {
         return -1;
     }
@@ -477,6 +527,7 @@ int main(int argv, char** argc) {
 
     //关闭套接字
     closesocket(s_server);
+    closesocket(s_accept);
     //释放DLL资源
     WSACleanup();
     return 0;
