@@ -4,12 +4,16 @@
 #include <conio.h>
 #include "opencv2/aruco.hpp"
 
+#include "json/json.h"
+
+// 多线程
 #include <mutex>
 #include <condition_variable>
 
 // socket
 #include<winsock.h>
 #pragma comment(lib,"ws2_32.lib")
+
 
 std::mutex data_mutex;
 std::condition_variable data_var;
@@ -31,8 +35,8 @@ int send_len = 0;
 int recv_len = 0;
 int len = 0;
 //定义发送缓冲区和接受缓冲区
-char send_buf[10000];
-char recv_buf[10000];
+char send_buf[1024];
+char recv_buf[1024];
 //定义服务端套接字，接受请求套接字
 SOCKET s_server;
 SOCKET s_accept;
@@ -321,7 +325,7 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
             sendMessage(Message);*/
         }
         else {
-            std::cout << "cannot find anymarks" << std::endl;
+            //std::cout << "cannot find anymarks" << std::endl;
         }
         //std::chrono::time_point<std::chrono::high_resolution_clock> p1 = std::chrono::high_resolution_clock::now();
         //std::cout << "stitch high_resolution_clock time:" << (float)std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0).count() / 1000 << "ms" << std::endl;
@@ -360,7 +364,7 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
 {   
     //填充服务端信息
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+    server_addr.sin_addr.S_un.S_addr = inet_addr("172.22.25.111");
     server_addr.sin_port = htons(2022);
     //创建套接字
     s_server = socket(AF_INET, SOCK_STREAM, 0);
@@ -391,7 +395,7 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
     }
     std::cout << "连接建立，准备接受数据" << std::endl;
     while (1) {
-        recv_len = recv(s_accept, recv_buf, 100, 0);
+        recv_len = recv(s_accept, recv_buf, 1024, 0);
         if (recv_len < 0) {
             std::cout << "接受失败！" << std::endl;
             break;
@@ -399,13 +403,13 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
         else {
             std::cout << "客户端信息:" << recv_buf << std::endl;
         }
-        std::cout << "请输入回复信息:";
+ /*       std::cout << "请输入回复信息:";
         std::cin >> send_buf;
-        send_len = send(s_accept, send_buf, 100, 0);
+        send_len = send(s_accept, send_buf, 1024, 0);
         if (send_len < 0) {
             std::cout << "发送失败！" << std::endl;
             break;
-        }
+        }*/
     }
     return 0;
 }
