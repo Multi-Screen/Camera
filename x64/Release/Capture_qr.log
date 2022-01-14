@@ -1,45 +1,36 @@
 ﻿  Capture_qr.cpp
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(26,26): warning C4305: “初始化”: 从“double”到“float”截断
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(148,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(34,25): warning C4305: “初始化”: 从“double”到“float”截断
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(147,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(155,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(146,34): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(154,34): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(153,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(161,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(152,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(160,16): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(151,34): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(159,34): warning C4244: “参数”: 从“double”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,49): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
-          with
-          [
-              _Tp=double
-          ]
-          and
-          [
-              _Tp=float
-          ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,40): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(164,49): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=double
@@ -48,7 +39,7 @@ E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,40): warning C4244: “参数”: �
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,31): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(164,40): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=double
@@ -57,20 +48,29 @@ E:\MultiScreen\Capture_qr\Capture_qr.cpp(156,31): warning C4244: “参数”: �
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(258,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(164,31): warning C4244: “参数”: 从“_Tp”转换到“_Tp”，可能丢失数据
+          with
+          [
+              _Tp=double
+          ]
+          and
+          [
+              _Tp=float
+          ]
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(263,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(261,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(266,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
           with
           [
               _Tp=float
           ]
-E:\MultiScreen\Capture_qr\Capture_qr.cpp(280,106): warning C4305: “参数”: 从“double”到“float”截断
+E:\MultiScreen\Capture_qr\Capture_qr.cpp(285,106): warning C4305: “参数”: 从“double”到“float”截断
   正在生成代码
-  2 of 295 functions ( 0.7%) were compiled, the rest were copied from previous compilation.
+  2 of 379 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    11 functions had inline decision re-evaluated but remain unchanged
+    3 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   Capture_qr.vcxproj -> E:\MultiScreen\Capture_qr\x64\Release\Capture_qr.exe

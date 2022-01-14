@@ -14,6 +14,8 @@
 #include<winsock.h>
 #pragma comment(lib,"ws2_32.lib")
 
+using namespace cv;
+
 
 std::mutex data_mutex;
 std::condition_variable data_var;
@@ -21,9 +23,15 @@ int flag = 1;
 
 
 cv::Mat src_img;
+// RT矩阵
+cv::Mat Rt = cv::Mat::zeros(4, 4, CV_64F);
+// 相机世界坐标
+Mat camera_world;
+
+bool print_xyz = false;
 
 // 标签大小
-float labelWidth = 0.0167;
+float labelWidth = 0.034;
 
 unsigned int payload_size = 0;
 bool g_bExit = false;
@@ -235,9 +243,6 @@ static  unsigned int __stdcall  WorkThread(void* pUser)
     return 0;
 }
 
-// 计算坐标--相对于摄像机，摄像机是世界坐标的0 0 0
-float init_data[4] = { 0,0,0,1 };
-cv::Mat camera_pos = cv::Mat(4, 1, CV_32F, &init_data);
 
 static  unsigned int __stdcall  WorkThread2(void* pUser)
 {
@@ -250,7 +255,7 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         //========处理检测码============
          // load intrinsics,需要标定相机才能获取
         cv::Mat cameraMatrix = cv::Mat(3, 3, CV_32F), distCoeffs = cv::Mat(1, 5, CV_32F);
-        cv::Mat Rt = cv::Mat(3, 4, CV_32F);
+        
         std::vector<std::vector<float>> intrinsics = {
             {3535.78,0,860.79} ,
             {0,3551.96,480.73},
@@ -275,12 +280,18 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
             }
         }
 
-        cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_4X4_100));
+        cv::Ptr<cv::aruco::Dictionary> dict = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_6X6_50));
         // board: aruco map. create(x_num, y_num, size(m), gap, diction, (index=1))
         cv::Ptr<cv::aruco::GridBoard> board = cv::aruco::GridBoard::create(7, 10, labelWidth, 0.004, dict);   // real distance in meters.
         std::vector<int> markerIds;         // detected ids.
         std::vector<std::vector<cv::Point2f>> markerCorners;
-        cv::aruco::detectMarkers(src_img, board->dictionary, markerCorners, markerIds);
+        try {
+            cv::aruco::detectMarkers(src_img, board->dictionary, markerCorners, markerIds);
+        }
+        catch (Exception e) {
+            std::cout << e.what() << std::endl;
+        }
+        
 
         if (markerIds.size() > 0) {      // if at least one marker detected
             cv::aruco::drawDetectedMarkers(src_img, markerCorners, markerIds);
@@ -288,41 +299,44 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
             std::vector<cv::Vec3d> rvecs;
             std::vector<cv::Vec3d> tvecs;
             cv::aruco::estimatePoseSingleMarkers(markerCorners, labelWidth, cameraMatrix, distCoeffs, rvecs, tvecs);
-            std::cout << rvecs[0][0] << std::endl;
-            std::cout << rvecs[0][1] << std::endl;
-            std::cout << rvecs[0][2] << std::endl;
+
             // 画出轴
             //for (int i = 0; i < markerIds.size(); i++)
             //   cv::aruco::drawAxis(src_img, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], 0.1);
-            /*
+            //y *=-1
+            tvecs[0][1] *= -1;
             // 旋转矩阵
-            Mat rot_mat = Mat(3, 3, CV_32F);
+            Mat rot_mat;
             Rodrigues(rvecs[0], rot_mat);
+            //for (int i = 0; i < 3; i++)
+            //{
+            //    for (int j = 0; j < 3; j++)
+            //    {
+            //        std::cout << rot_mat.at<double>(i, j) << " ";
+            //    }
+            //    std::cout << std::endl;
+            //}
             for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    Rt.at<double>(i, j) = rot_mat.at<double>(i, j);
+                }
+            }
+            for (int j = 0; j < 3; j++) {
+                // 赋值平移
+                Rt.at<double>(j, 3) = tvecs[0][j];
+            }
+            Rt.at<double>(3, 3) = 1;
+
+ /*           for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    if (j < 3) {
-                        Rt.at<float>(i, j) = rot_mat.at<float>(i, j);
-                    }
-                    else {
-                        Rt.at<float>(i, j) = tvecs[0][i];
-                    }
+                    std::cout << Rt.at<double>(i, j) << " ";
                 }
-            }
-            Mat res = Mat(3, 1, CV_32F);
-            try
-            {
-                res = Rt * camera_pos;
-
-            }
-            catch (const std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }
-            std::cout << res << std::endl;*/
-            /*String Message = to_string(1) + "," + to_string(2);
-            sendMessage(Message);*/
+                std::cout << std::endl;
+            }*/
         }
         else {
             //std::cout << "cannot find anymarks" << std::endl;
@@ -394,25 +408,68 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
         return 0;
     }
     std::cout << "连接建立，准备接受数据" << std::endl;
+
     while (1) {
+       
         recv_len = recv(s_accept, recv_buf, 1024, 0);
         if (recv_len < 0) {
             std::cout << "接受失败！" << std::endl;
-            break;
+            continue;
         }
         else {
-            std::cout << "客户端信息:" << recv_buf << std::endl;
+            std::cout << recv_buf << std::endl;
+            std::string str(recv_buf);
+            std::vector<double> position;
+            std::stringstream ss(str);
+            double temp;
+            while (ss >> temp)
+                position.push_back(temp);
+            Mat marker_world = Mat::ones(4, 1, CV_64F);
+            for (int j = 0; j < 3; j++)
+            {
+                marker_world.at<double>(j,0) = position[j];
+            }
+            Mat invert_Rt;
+            invert(Rt, invert_Rt);
+            camera_world = invert_Rt*marker_world;
+            print_xyz = true;
+            /*double x = camera_world.at<double>(0, 0);
+            double y = camera_world.at<double>(1, 0);
+            double z = camera_world.at<double>(2, 0);
+            std::cout << x << std::endl;
+            std::cout << y << std::endl;
+            std::cout << z << std::endl;*/
+
         }
- /*       std::cout << "请输入回复信息:";
-        std::cin >> send_buf;
-        send_len = send(s_accept, send_buf, 1024, 0);
+        send_len = send(s_accept, "123", 1024, 0);
         if (send_len < 0) {
             std::cout << "发送失败！" << std::endl;
-            break;
-        }*/
+            continue;
+        }
     }
     return 0;
 }
+
+static  unsigned int __stdcall  WorkThread5(void* pUser) {
+    while (1) {
+        if (print_xyz) {
+            Mat new_marker_world = Rt * camera_world;
+            double x = new_marker_world.at<double>(0, 0);
+            double y = new_marker_world.at<double>(1, 0);
+            double z = new_marker_world.at<double>(2, 0);
+            std::string position = std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z);
+            send_len = send(s_accept, position.data(), 1024, 0);
+            if (send_len < 0) {
+                std::cout << "发送失败！" << std::endl;
+                continue;
+            }
+            
+        }
+    }
+    return 0;
+}
+
+
 
 
 int main() {
@@ -503,6 +560,12 @@ int main() {
 
     void* hThreadHandle_socket = (void*)_beginthreadex(NULL, 0, WorkThread4, handle, 0, &nThreadID);
     if (NULL == hThreadHandle_socket)
+    {
+        return -1;
+    }
+    unsigned int nThreadID5 = 10;
+    void* hThreadHandle_print = (void*)_beginthreadex(NULL, 0, WorkThread5, handle, 0, &nThreadID5);
+    if (NULL == hThreadHandle_print)
     {
         return -1;
     }
