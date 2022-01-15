@@ -410,11 +410,10 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
     std::cout << "连接建立，准备接受数据" << std::endl;
 
     while (1) {
-       
         recv_len = recv(s_accept, recv_buf, 1024, 0);
         if (recv_len < 0) {
             std::cout << "接受失败！" << std::endl;
-            continue;
+            break;
         }
         else {
             std::cout << recv_buf << std::endl;
@@ -444,7 +443,7 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
         send_len = send(s_accept, "123", 1024, 0);
         if (send_len < 0) {
             std::cout << "发送失败！" << std::endl;
-            continue;
+            break;
         }
     }
     return 0;
@@ -461,7 +460,10 @@ static  unsigned int __stdcall  WorkThread5(void* pUser) {
             send_len = send(s_accept, position.data(), 1024, 0);
             if (send_len < 0) {
                 std::cout << "发送失败！" << std::endl;
-                continue;
+                break;
+            }
+            else {
+                std::cout << "发送:" << position << std::endl;
             }
             
         }
@@ -475,6 +477,9 @@ static  unsigned int __stdcall  WorkThread5(void* pUser) {
 int main() {
    
     initialization();
+   
+    
+    
     //std::std::cout << "main: " << std::this_thread::get_id() << "   printf: " << "main" << std::std::endl;
     void* handle = NULL;
     MV_CC_DEVICE_INFO_LIST wt_devices;
