@@ -3,8 +3,9 @@
 #include "opencv2/opencv.hpp"
 #include <conio.h>
 #include "opencv2/aruco.hpp"
+#include "cmath"
 
-#include "json/json.h"
+//#include "json/json.h"
 
 // 多线程
 #include <mutex>
@@ -15,6 +16,13 @@
 #pragma comment(lib,"ws2_32.lib")
 
 using namespace cv;
+//=====utils
+bool equal(double num1, double num2)
+{
+    if ((num1 - num2 > -0.002) && (num1 - num2) < 0.002)
+        return true;
+    else return false;
+}
 
 
 std::mutex data_mutex;
@@ -136,44 +144,6 @@ int RGB2BGR(unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight)
     return MV_OK;
 }
 
-// 3D角坐标 https://stackoverflow.com/questions/46363618/aruco-markers-with-opencv-get-the-3d-corner-coordinates
-std::vector<cv::Point3f> getCornersInCameraWorld(double side, cv::Vec3d rvec, cv::Vec3d tvec) {
-
-    double half_side = side / 2;
-
-
-    // compute rot_mat
-    cv::Mat rot_mat;
-    Rodrigues(rvec, rot_mat);
-
-    // transpose of rot_mat for easy columns extraction
-    cv::Mat rot_mat_t = rot_mat.t();
-
-    // the two E-O and F-O vectors
-    double* tmp = rot_mat_t.ptr<double>(0);
-    cv::Point3f camWorldE(tmp[0] * half_side,
-        tmp[1] * half_side,
-        tmp[2] * half_side);
-
-    tmp = rot_mat_t.ptr<double>(1);
-    cv::Point3f camWorldF(tmp[0] * half_side,
-        tmp[1] * half_side,
-        tmp[2] * half_side);
-
-    // convert tvec to point
-    cv::Point3f tvec_3f(tvec[0], tvec[1], tvec[2]);
-
-    // return vector:
-    std::vector<cv::Point3f> ret(4, tvec_3f);
-
-    ret[0] += camWorldE + camWorldF;
-    ret[1] += -camWorldE + camWorldF;
-    ret[2] += -camWorldE - camWorldF;
-    ret[3] += camWorldE - camWorldF;
-
-    return ret;
-}
-
 // convert data stream in Mat format
 bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char* pData, cv::Mat& src_img)
 {
@@ -250,7 +220,7 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         std::unique_lock<std::mutex> lck(data_mutex);
         data_var.wait(lck, [] {return flag == 2; });
 
-        //std::std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::std::endl;
+        //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
         //std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
         //========处理检测码============
          // load intrinsics,需要标定相机才能获取
@@ -329,14 +299,30 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
             }
             Rt.at<double>(3, 3) = 1;
 
- /*           for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    std::cout << Rt.at<double>(i, j) << " ";
-                }
-                std::cout << std::endl;
-            }*/
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    for (int j = 0; j < 4; j++)
+            //    {
+            //        std::cout << Rt.at<double>(i, j) << " ";
+            //    }
+            //    std::cout << std::endl;
+            //}
+            // 测试
+            //Mat marker_world = Mat::ones(4, 1, CV_64F);
+            //for (int j = 0; j < 3; j++)
+            //{
+            //    marker_world.at<double>(j, 0) = 0;
+            //}
+            //Mat invert_Rt = Mat(4,4,CV_64F);
+            //invert(Rt, invert_Rt);
+            //camera_world = invert_Rt * marker_world;
+            //double x = camera_world.at<double>(0, 0);
+            //double y = camera_world.at<double>(1, 0);
+            //double z = camera_world.at<double>(2, 0);
+            //std::cout << x << " ";
+            //std::cout << y << " ";
+            //std::cout << z << std::endl;
+            // 测试
         }
         else {
             //std::cout << "cannot find anymarks" << std::endl;
@@ -378,7 +364,7 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
 {   
     //填充服务端信息
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.S_un.S_addr = inet_addr("172.22.25.111");
+    server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(2022);
     //创建套接字
     s_server = socket(AF_INET, SOCK_STREAM, 0);
@@ -399,6 +385,7 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
         std::cout << "设置监听状态成功！" << std::endl;
     }
     std::cout << "服务端正在监听连接，请稍候...." << std::endl;
+    double prev_x = 0.0, prev_y = 0.0, prev_z = 0.0;
     //接受连接请求
     len = sizeof(SOCKADDR);
     s_accept = accept(s_server, (SOCKADDR*)&accept_addr, &len);
@@ -408,7 +395,6 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
         return 0;
     }
     std::cout << "连接建立，准备接受数据" << std::endl;
-
     while (1) {
         recv_len = recv(s_accept, recv_buf, 1024, 0);
         if (recv_len < 0) {
@@ -418,29 +404,50 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
         else {
             std::cout << recv_buf << std::endl;
             std::string str(recv_buf);
-            std::vector<double> position;
-            std::stringstream ss(str);
-            double temp;
-            while (ss >> temp)
-                position.push_back(temp);
-            Mat marker_world = Mat::ones(4, 1, CV_64F);
-            for (int j = 0; j < 3; j++)
-            {
-                marker_world.at<double>(j,0) = position[j];
+            // Todo 用json重写
+            if (!str._Equal("1")) {
+                std::vector<double> position;
+                std::stringstream ss(str);
+                double temp;
+                while (ss >> temp)
+                    position.push_back(temp);
+                Mat marker_world = Mat::ones(4, 1, CV_64F);
+                for (int j = 0; j < 3; j++)
+                {
+                    marker_world.at<double>(j, 0) = position[j];
+                }
+                Mat invert_Rt;
+                invert(Rt, invert_Rt);
+                camera_world = invert_Rt * marker_world;
             }
-            Mat invert_Rt;
-            invert(Rt, invert_Rt);
-            camera_world = invert_Rt*marker_world;
-            print_xyz = true;
-            /*double x = camera_world.at<double>(0, 0);
-            double y = camera_world.at<double>(1, 0);
-            double z = camera_world.at<double>(2, 0);
-            std::cout << x << std::endl;
-            std::cout << y << std::endl;
-            std::cout << z << std::endl;*/
-
+            else {
+                Mat new_marker_world = Rt * camera_world;
+                double x = new_marker_world.at<double>(0, 0);
+                double y = new_marker_world.at<double>(1, 0);
+                double z = new_marker_world.at<double>(2, 0);
+                if (equal(prev_x, x) && equal(prev_y, y) && equal(prev_z, z)) {
+                    continue;
+                }
+                std::string position = std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z);
+                prev_x = x;
+                prev_y = y;
+                prev_z = z;
+                send_len = send(s_accept, position.data(), 1024, 0);
+                if (send_len < 0) {
+                    std::cout << "发送失败！" << std::endl;
+                    break;
+                }
+                else {
+                    std::cout << "发送:" << position << std::endl;
+                }
+            }
+            
         }
-        send_len = send(s_accept, "123", 1024, 0);
+        // 清空
+        for (int i = 0; i < recv_len; i++) {
+            recv_buf[i] = '\0';
+        }
+        send_len = send(s_accept, "ok", 1024, 0);
         if (send_len < 0) {
             std::cout << "发送失败！" << std::endl;
             break;
@@ -449,24 +456,12 @@ static  unsigned int __stdcall  WorkThread4(void* pUser)
     return 0;
 }
 
+
+
 static  unsigned int __stdcall  WorkThread5(void* pUser) {
-    while (1) {
-        if (print_xyz) {
-            Mat new_marker_world = Rt * camera_world;
-            double x = new_marker_world.at<double>(0, 0);
-            double y = new_marker_world.at<double>(1, 0);
-            double z = new_marker_world.at<double>(2, 0);
-            std::string position = std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z);
-            send_len = send(s_accept, position.data(), 1024, 0);
-            if (send_len < 0) {
-                std::cout << "发送失败！" << std::endl;
-                break;
-            }
-            else {
-                std::cout << "发送:" << position << std::endl;
-            }
-            
-        }
+   
+    while (true) {
+        
     }
     return 0;
 }
@@ -477,8 +472,6 @@ static  unsigned int __stdcall  WorkThread5(void* pUser) {
 int main() {
    
     initialization();
-   
-    
     
     //std::std::cout << "main: " << std::this_thread::get_id() << "   printf: " << "main" << std::std::endl;
     void* handle = NULL;
@@ -568,12 +561,12 @@ int main() {
     {
         return -1;
     }
-    unsigned int nThreadID5 = 10;
-    void* hThreadHandle_print = (void*)_beginthreadex(NULL, 0, WorkThread5, handle, 0, &nThreadID5);
-    if (NULL == hThreadHandle_print)
-    {
-        return -1;
-    }
+    //unsigned int nThreadID5 = 10;
+    //void* hThreadHandle_print = (void*)_beginthreadex(NULL, 0, WorkThread5, handle, 0, &nThreadID5);
+    //if (NULL == hThreadHandle_print)
+    //{
+    //    return -1;
+    //}
 
     printf("Press a key to stop grabbing.\n");
     WaitForKeyPress();

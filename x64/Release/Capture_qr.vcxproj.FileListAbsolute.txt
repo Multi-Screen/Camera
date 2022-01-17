@@ -1,1 +1,2 @@
 E:\MultiScreen\Capture_qr\x64\Release\Capture_qr.exe
+D:\todolist\Capture_qr\x64\Release\Capture_qr.exe
