@@ -1,19 +1,32 @@
-﻿  Capture_qr.cpp
-D:\todolist\Capture_qr\Capture_qr.cpp(42,25): warning C4305: “初始化”: 从“double”到“float”截断
-D:\todolist\Capture_qr\Capture_qr.cpp(233,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+﻿  CameraCalibrator.cpp
+D:\todolist\Capture_qr\CameraCalibrator.cpp(19,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-D:\todolist\Capture_qr\Capture_qr.cpp(236,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+D:\todolist\Capture_qr\CameraCalibrator.cpp(19,40): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
           with
           [
               _Tp=float
           ]
-D:\todolist\Capture_qr\Capture_qr.cpp(255,106): warning C4305: “参数”: 从“double”到“float”截断
+  Capture_qr.cpp
+D:\todolist\Capture_qr\Capture_qr.cpp(43,25): warning C4305: “初始化”: 从“double”到“float”截断
+D:\todolist\Capture_qr\Capture_qr.cpp(200,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+          with
+          [
+              _Tp=float
+          ]
+D:\todolist\Capture_qr\Capture_qr.cpp(203,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+          with
+          [
+              _Tp=float
+          ]
+D:\todolist\Capture_qr\Capture_qr.cpp(222,106): warning C4305: “参数”: 从“double”到“float”截断
+D:\todolist\Capture_qr\Capture_qr.cpp(391,10): warning C4101: “send_buf”: 未引用的局部变量
+  calibrate.cpp
   正在生成代码
-  2 of 419 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    6 functions had inline decision re-evaluated but remain unchanged
+  41 of 405 functions (10.1%) were compiled, the rest were copied from previous compilation.
+    7 functions were new in current compilation
+    42 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   Capture_qr.vcxproj -> D:\todolist\Capture_qr\x64\Release\Capture_qr.exe

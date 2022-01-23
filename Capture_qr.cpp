@@ -16,6 +16,7 @@
 #pragma comment(lib,"ws2_32.lib")
 
 using namespace cv;
+
 //=====utils
 bool equal(double num1, double num2)
 {
@@ -28,7 +29,7 @@ bool equal(double num1, double num2)
 std::mutex data_mutex;
 std::condition_variable data_var;
 int flag = 1;
-
+double prev_x = 0.0, prev_y = 0.0, prev_z = 0.0;
 
 cv::Mat src_img;
 // RT矩阵
@@ -45,20 +46,6 @@ unsigned int payload_size = 0;
 bool g_bExit = false;
 
 int ret = MV_OK;
-
-// socket 
-int send_len = 0;
-int recv_len = 0;
-int len = 0;
-//定义发送缓冲区和接受缓冲区
-char send_buf[1024];
-char recv_buf[1024];
-//定义服务端套接字，接受请求套接字
-SOCKET s_server;
-SOCKET s_accept;
-//服务端地址客户端地址
-SOCKADDR_IN server_addr;
-SOCKADDR_IN accept_addr;
 
 void initialization() {
     //初始化套接字库
@@ -187,8 +174,6 @@ static  unsigned int __stdcall  WorkThread(void* pUser)
     //std::std::cout <<  std::this_thread::get_id() << "   printf: " << "WorkThread1" << std::std::endl;
     unsigned char* data = (unsigned char*)malloc(sizeof(unsigned char) * (payload_size));
     while (1) {
-        std::unique_lock<std::mutex> lck(data_mutex);
-        data_var.wait(lck, [] {return flag == 1; });
 
         if (data == NULL) {
             return -1;
@@ -202,30 +187,12 @@ static  unsigned int __stdcall  WorkThread(void* pUser)
         if (Convert2Mat(&wt_imginfo, data, src_img) == false) {
             return -1;
         }
-        //=======================
-        if (g_bExit) {
-            break;
-        }
-
-        flag = 2;
-        data_var.notify_all();
-    }
-    return 0;
-}
-
-
-static  unsigned int __stdcall  WorkThread2(void* pUser)
-{
-    while (1) {
-        std::unique_lock<std::mutex> lck(data_mutex);
-        data_var.wait(lck, [] {return flag == 2; });
-
-        //std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
+        // std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread2" << std::endl;
         //std::chrono::time_point<std::chrono::high_resolution_clock> p0 = std::chrono::high_resolution_clock::now();
         //========处理检测码============
          // load intrinsics,需要标定相机才能获取
         cv::Mat cameraMatrix = cv::Mat(3, 3, CV_32F), distCoeffs = cv::Mat(1, 5, CV_32F);
-        
+
         std::vector<std::vector<float>> intrinsics = {
             {3535.78,0,860.79} ,
             {0,3551.96,480.73},
@@ -261,7 +228,7 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         catch (Exception e) {
             std::cout << e.what() << std::endl;
         }
-        
+
 
         if (markerIds.size() > 0) {      // if at least one marker detected
             cv::aruco::drawDetectedMarkers(src_img, markerCorners, markerIds);
@@ -327,152 +294,22 @@ static  unsigned int __stdcall  WorkThread2(void* pUser)
         else {
             //std::cout << "cannot find anymarks" << std::endl;
         }
-        //std::chrono::time_point<std::chrono::high_resolution_clock> p1 = std::chrono::high_resolution_clock::now();
+        // std::chrono::time_point<std::chrono::high_resolution_clock> p1 = std::chrono::high_resolution_clock::now();
         //std::cout << "stitch high_resolution_clock time:" << (float)std::chrono::duration_cast<std::chrono::microseconds>(p1 - p0).count() / 1000 << "ms" << std::endl;
-        //=======================
-
-        if (g_bExit) {
-            break;
-        }
-        flag = 3;
-        data_var.notify_all();
-    }
-    return 0;
-}
-
-
-static  unsigned int __stdcall  WorkThread3(void* pUser)
-{
-    while (1) {
-        std::unique_lock<std::mutex> lck(data_mutex);
-        data_var.wait(lck, [] {return flag == 3; });
-        //std::std::cout << "thread: " << std::this_thread::get_id() << "   printf: " << "WorkThread3" << std::std::endl;
-
         cv::imshow("test", src_img);
         cv::waitKey(1);
-        flag = 1;
         if (g_bExit) {
             break;
         }
-        data_var.notify_all();
     }
     return 0;
 }
-
-
-static  unsigned int __stdcall  WorkThread4(void* pUser)
-{   
-    //填充服务端信息
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(2022);
-    //创建套接字
-    s_server = socket(AF_INET, SOCK_STREAM, 0);
-    int flag = bind(s_server, (SOCKADDR*)&server_addr, sizeof(SOCKADDR));
-    if (flag == SOCKET_ERROR) {
-        std::cout << "套接字绑定失败！" << std::endl;
-        WSACleanup();
-    }
-    else {
-        std::cout << "套接字绑定成功！" << std::endl;
-    }
-    //设置套接字为监听状态
-    if (listen(s_server, SOMAXCONN) < 0) {
-        std::cout << "设置监听状态失败！" << std::endl;
-        WSACleanup();
-    }
-    else {
-        std::cout << "设置监听状态成功！" << std::endl;
-    }
-    std::cout << "服务端正在监听连接，请稍候...." << std::endl;
-    double prev_x = 0.0, prev_y = 0.0, prev_z = 0.0;
-    //接受连接请求
-    len = sizeof(SOCKADDR);
-    s_accept = accept(s_server, (SOCKADDR*)&accept_addr, &len);
-    if (s_accept == SOCKET_ERROR) {
-        std::cout << "连接失败！" << std::endl;
-        WSACleanup();
-        return 0;
-    }
-    std::cout << "连接建立，准备接受数据" << std::endl;
-    while (1) {
-        recv_len = recv(s_accept, recv_buf, 1024, 0);
-        if (recv_len < 0) {
-            std::cout << "接受失败！" << std::endl;
-            break;
-        }
-        else {
-            std::cout << recv_buf << std::endl;
-            std::string str(recv_buf);
-            // Todo 用json重写
-            if (!str._Equal("1")) {
-                std::vector<double> position;
-                std::stringstream ss(str);
-                double temp;
-                while (ss >> temp)
-                    position.push_back(temp);
-                Mat marker_world = Mat::ones(4, 1, CV_64F);
-                for (int j = 0; j < 3; j++)
-                {
-                    marker_world.at<double>(j, 0) = position[j];
-                }
-                Mat invert_Rt;
-                invert(Rt, invert_Rt);
-                camera_world = invert_Rt * marker_world;
-            }
-            else {
-                Mat new_marker_world = Rt * camera_world;
-                double x = new_marker_world.at<double>(0, 0);
-                double y = new_marker_world.at<double>(1, 0);
-                double z = new_marker_world.at<double>(2, 0);
-                if (equal(prev_x, x) && equal(prev_y, y) && equal(prev_z, z)) {
-                    continue;
-                }
-                std::string position = std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z);
-                prev_x = x;
-                prev_y = y;
-                prev_z = z;
-                send_len = send(s_accept, position.data(), 1024, 0);
-                if (send_len < 0) {
-                    std::cout << "发送失败！" << std::endl;
-                    break;
-                }
-                else {
-                    std::cout << "发送:" << position << std::endl;
-                }
-            }
-            
-        }
-        // 清空
-        for (int i = 0; i < recv_len; i++) {
-            recv_buf[i] = '\0';
-        }
-        send_len = send(s_accept, "ok", 1024, 0);
-        if (send_len < 0) {
-            std::cout << "发送失败！" << std::endl;
-            break;
-        }
-    }
-    return 0;
+int startsWith(std::string s, std::string sub) {
+    return s.find(sub) == 0 ? 1 : 0;
 }
-
-
-
-static  unsigned int __stdcall  WorkThread5(void* pUser) {
-   
-    while (true) {
-        
-    }
-    return 0;
-}
-
-
-
 
 int main() {
-   
-    initialization();
-    
+
     //std::std::cout << "main: " << std::this_thread::get_id() << "   printf: " << "main" << std::std::endl;
     void* handle = NULL;
     MV_CC_DEVICE_INFO_LIST wt_devices;
@@ -544,29 +381,110 @@ int main() {
         return -1;
     }
 
-    void* hThreadHandle2 = (void*)_beginthreadex(NULL, 0, WorkThread2, handle, 0, &nThreadID);
-    if (NULL == hThreadHandle2)
-    {
-        return -1;
-    }
+    // todo 优化阻塞问题
 
-    void* hThreadHandle3 = (void*)_beginthreadex(NULL, 0, WorkThread3, handle, 0, &nThreadID);
-    if (NULL == hThreadHandle3)
-    {
-        return -1;
+    //定义长度变量
+    int send_len = 0;
+    int recv_len = 0;
+    int len = 0;
+    //定义发送缓冲区和接受缓冲区
+    char send_buf[1024];
+    char recv_buf[1024];
+    //定义服务端套接字，接受请求套接字
+    SOCKET s_server;
+    SOCKET s_accept;
+    //服务端地址客户端地址
+    SOCKADDR_IN server_addr;
+    SOCKADDR_IN accept_addr;
+    initialization();
+    //填充服务端信息
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(9999);
+    //创建套接字
+    s_server = socket(AF_INET, SOCK_STREAM, 0);
+    if (bind(s_server, (SOCKADDR*)&server_addr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
+        std::cout << "套接字绑定失败！" << std::endl;
+        WSACleanup();
     }
+    else {
+        std::cout << "套接字绑定成功！" << std::endl;
+    }
+    //设置套接字为监听状态
+    if (listen(s_server, SOMAXCONN) < 0) {
+        std::cout << "设置监听状态失败！" << std::endl;
+        WSACleanup();
+    }
+    else {
+        std::cout << "设置监听状态成功！" << std::endl;
+    }
+    std::cout << "服务端正在监听连接，请稍候...." << std::endl;
+    //接受连接请求
+    len = sizeof(SOCKADDR);
+    s_accept = accept(s_server, (SOCKADDR*)&accept_addr, &len);
+    if (s_accept == SOCKET_ERROR) {
+        std::cout << "连接失败！" << std::endl;
+        WSACleanup();
+        return 0;
+    }
+    std::cout << "连接建立，准备接受数据" << std::endl;
+    //接收数据
+    while (1) {
+        recv_len = recv(s_accept, recv_buf, 1024, 0);
+        if (recv_len < 0) {
+            std::cout << "接受失败！" << std::endl;
+            break;
+        }
+        else {
+            recv_buf[recv_len] = '\0';
+            std::cout << "客户端信息:" << recv_buf << std::endl;
+            std::string str(recv_buf);
+            std::string temp("get_position");
+            // Todo 用json重写
+            if (startsWith(str, temp) == 1) {
+                Mat new_marker_world = Rt * camera_world;
+                double x = new_marker_world.at<double>(0, 0);
+                double y = new_marker_world.at<double>(1, 0);
+                double z = new_marker_world.at<double>(2, 0);
+                if (equal(prev_x, x) && equal(prev_y, y) && equal(prev_z, z)) {
+                    continue;
+                }
+                std::string position = std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z);
+                prev_x = x;
+                prev_y = y;
+                prev_z = z;
+                send_len = send(s_accept, position.data(), 1024, 0);
+                if (send_len < 0) {
+                    std::cout << "发送失败！" << std::endl;
+                    break;
+                }
+                else {
+                    std::cout << "发送:" << position << std::endl;
+                }
+            }
+            else {
+                std::vector<double> position;
+                std::stringstream ss(str);
+                double temp;
+                while (ss >> temp)
+                    position.push_back(temp);
+                Mat marker_world = Mat::ones(4, 1, CV_64F);
+                for (int j = 0; j < 3; j++)
+                {
+                    marker_world.at<double>(j, 0) = position[j];
+                }
+                Mat invert_Rt;
+                invert(Rt, invert_Rt);
+                camera_world = invert_Rt * marker_world;
+            }
+        }
 
-    void* hThreadHandle_socket = (void*)_beginthreadex(NULL, 0, WorkThread4, handle, 0, &nThreadID);
-    if (NULL == hThreadHandle_socket)
-    {
-        return -1;
+        /*     send_len = send(s_accept, "ok", 1024, 0);
+             if (send_len < 0) {
+                 std::cout << "发送失败！" << std::endl;
+                 break;
+             }*/
     }
-    //unsigned int nThreadID5 = 10;
-    //void* hThreadHandle_print = (void*)_beginthreadex(NULL, 0, WorkThread5, handle, 0, &nThreadID5);
-    //if (NULL == hThreadHandle_print)
-    //{
-    //    return -1;
-    //}
 
     printf("Press a key to stop grabbing.\n");
     WaitForKeyPress();
