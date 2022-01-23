@@ -1,0 +1,27 @@
+﻿  calibrate.cpp
+  CameraCalibrator.cpp
+C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\CameraCalibrator.cpp(19,43): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
+          with
+          [
+              _Tp=float
+          ]
+C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\CameraCalibrator.cpp(19,40): warning C4244: “参数”: 从“int”转换到“_Tp”，可能丢失数据
+          with
+          [
+              _Tp=float
+          ]
+  Capture_qr.cpp
+C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\Capture_qr.cpp(42,25): warning C4305: “初始化”: 从“double”到“float”截断
+C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\Capture_qr.cpp(233,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+          with
+          [
+              _Tp=float
+          ]
+C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\Capture_qr.cpp(236,9): warning C4305: “初始化”: 从“double”到“_Tp”截断
+          with
+          [
+              _Tp=float
+          ]
+C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\Capture_qr.cpp(255,106): warning C4305: “参数”: 从“double”到“float”截断
+  正在生成代码...
+  Capture_qr.vcxproj -> C:\Users\shouk\Downloads\Camera-main (2)\Camera-main\x64\Debug\Capture_qr.exe
